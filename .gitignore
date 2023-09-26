@@ -3,8 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 #add the file names that you dont want to push
+.DS_Store
 tdt/
 dataset/
+assignment2/__pycache__/
 # C extensions
 *.so
 
