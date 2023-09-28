@@ -1,4 +1,5 @@
 from DbQuery import QueryClass
+from Data_Preparation import *
 
 # Making Dictionary for creating tables in the DB
 
@@ -26,8 +27,25 @@ TrackpointDict={
 'foreign key': '(activity_id) references activity(id)'
 }
 
+
+def insert_Users(q,users):
+    users_list=list()
+    for user,label in sorted(users.items()):
+        users_list.append((user,label))
+    query="INSERT INTO user (id,has_lebels) VALUES (%s, %s)"
+    print(users_list[:5])
+    q.insert_data(query,users_list)
+
+
+
+
+
+
+
 q=QueryClass()
-q.create_table('user',userDict)
-q.create_table('activity',activityDict)
-q.create_table('trackpoint',TrackpointDict)
-q.show_tables()
+# q.create_table('user',userDict)
+# q.create_table('activity',activityDict)
+# q.create_table('trackpoint',TrackpointDict)
+# q.show_tables()
+users=User_Preparation()
+insert_Users(q,users)

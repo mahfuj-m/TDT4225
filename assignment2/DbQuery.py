@@ -21,14 +21,10 @@ class QueryClass:
         self.cursor.execute(query % (table_name,columns[:-1]))
         self.db_connection.commit()
 
-    def insert_data(self, table_name):
-        names = ['Bobby', 'Mc', 'McSmack', 'Board']
-        for name in names:
-            # Take note that the name is wrapped in '' --> '%s' because it is a string,
-            # while an int would be %s etc
-            query = "INSERT INTO %s (name) VALUES ('%s')"
-            self.cursor.execute(query % (table_name, name))
+    def insert_data(self, query,data):
+        self.cursor.executemany(query, data)
         self.db_connection.commit()
+        print(self.cursor.rowcount,"records inserted!")
 
     def show_tables(self):
         self.cursor.execute("SHOW TABLES")
