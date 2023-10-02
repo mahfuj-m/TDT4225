@@ -5,6 +5,8 @@ import numpy as np
 ###Preparation for the  User table
 user_ids=dict()
 user_activity=dict()
+activity_backup=dict()
+
 user_trackpoint=dict()
 labeled_ids=[]
 def User_Preparation():
@@ -20,7 +22,7 @@ def User_Preparation():
                 user_ids[user]=False
     return user_ids
 # user_ids=dict(sorted(user_ids.items()))
-
+User_Preparation()
 
 #### End of insertion
 
@@ -42,10 +44,10 @@ def Activity_dict():
                 for line in data:
                     updated_line=(line[0].replace("-", "").replace(" ","").replace(":", ""),line[1],line[2])
                     temp.append(updated_line)
+                activity_backup[dir]=temp
+                user_activity[dir]=data
                 
-                user_activity[dir]=temp
-    
-    return user_activity
+    return user_activity,activity_backup
     ###End of activity preparation
 
 
@@ -57,35 +59,55 @@ Activity_dict()
 
 
 def Trackpoint_Preparation():
-    for user in sorted(user_ids.keys()):
-        activity=[]
+    count=0
+    for user in sorted(labeled_ids):
+    #for user in sorted(user_ids.keys()):
+        trackpoints=list()
+        # if count==4:
+        #     break
+        # count=count+1
         print('Processing : '+user)
         for root,dirs,files in os.walk('./dataset/dataset/Data/'+user):
             for file in files:
-                
+                #print(file)
                 transportation_mode=False
-                if file.endswith(".plt"):
-                    #print('File name: '+file)
-                    if user in labeled_ids:
-                        activity_data=user_activity.get(user)
-                        for line in activity_data:
-                            if file[:-4]==line[0]:
-                                transportation_mode=line[2]
-                                
+                if (file.endswith(".plt") and file != '.DS_Store'):
+                    # if (sum(1 for _ in open(root + '/' + file))>2500):
+                    #     print(root+"/"+file+ str(sum(1 for _ in open(root + '/' + file))))
+                    if (sum(1 for _ in open(root + '/' + file))<2500):
+                        if user in labeled_ids:
+                            activity_data=user_activity.get(user)
+                            for line in activity_data:
+                                if file[:-4]==line[0]:
+                                    print(file)
+                                    transportation_mode=file[:-4].replace("-", "").replace(" ","").replace(":", "")
+                                    
+                        temp=np.genfromtxt(root + '/' + file,skip_header=6,delimiter=',',
+                                                                usecols=(0, 1, 2, 3, 4, 5, 6),
+                                                                converters={2: (lambda x: transportation_mode if transportation_mode else "NULL"),
+                                                                            3: (lambda x: int(x) if isinstance(x, int) else float(x)),
+                                                                            5: (lambda x: str(x.decode("utf-8"))),
+                                                                            6: (lambda x: str(x.decode('utf-8')))},
+                                                                ).tolist()
+                        #print(len(temp))
+                        trackpoints=trackpoints+temp
+                        #print("After: "+str(len(trackpoints)))
                         
-                    activity.append(np.genfromtxt(root + '/' + file,skip_header=6,delimiter=',',
-                                                               usecols=(0, 1, 2, 3, 4, 5, 6),
-                                                               converters={2: (lambda x: transportation_mode if transportation_mode else "NULL"),
-                                                                           3: (lambda x: int(x) if isinstance(x, int) else float(x)),
-                                                                           5: (lambda x: str(x.decode("utf-8"))),
-                                                                           6: (lambda x: str(x.decode('utf-8')))},
-                                                               ).tolist())  
-                            
-                    if(len(activity)>2500):
-                        activity=activity[:2500]
-        user_trackpoint[user]=activity
+
+            #print(len(trackpoints))          
+        user_trackpoint[user]=trackpoints
+    # for user,val in user_trackpoint.items():
+    #     print(user+" : " + str(len(val)))
+      
     return user_trackpoint
-                
+
+# check=np.genfromtxt('./dataset/dataset/Data/010/Trajectory/',skip_header=6,delimiter=',',
+#                                                                 usecols=(0, 1, 2, 3, 4, 5, 6),
+#                                                                 converters={2: (lambda x: transportation_mode if transportation_mode else "NULL"),
+#                                                                             3: (lambda x: int(x) if isinstance(x, int) else float(x)),
+#                                                                             5: (lambda x: str(x.decode("utf-8"))),
+#                                                                             6: (lambda x: str(x.decode('utf-8')))},
+#                                                                 ).tolist()          
             
                             
 

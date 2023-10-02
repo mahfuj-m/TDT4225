@@ -1,6 +1,7 @@
 from DbConnector import DbConnector
 from tabulate import tabulate
-
+import mysql.connector as mysql
+import csv
 
 
 class QueryClass:
@@ -22,14 +23,30 @@ class QueryClass:
         self.db_connection.commit()
 
     def insert_data(self, query,data):
-        self.cursor.executemany(query, data)
-        self.db_connection.commit()
-        print(self.cursor.rowcount,"records inserted!")
+        try:
+            self.cursor.executemany(query, data)
+            self.db_connection.commit()
+            print(self.cursor.rowcount,"records inserted!")
+        except:
+            for d in data:
+                if len(d)<5:
+                    print(d)
+        
+
+    def read_data(self,query):
+        self.cursor.execute(query)
+        records = self.cursor.fetchall()
+        return records
 
     def show_tables(self):
         self.cursor.execute("SHOW TABLES")
         rows = self.cursor.fetchall()
         print(tabulate(rows, headers=self.cursor.column_names))
+        return rows
+    def delete_table(self,tables):
+        for table in tables:
+            query = "DROP TABLE %s"
+            self.cursor.execute(query % table)
 
 
 # def main():
