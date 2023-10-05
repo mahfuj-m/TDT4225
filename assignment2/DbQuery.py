@@ -42,7 +42,6 @@ class QueryClass:
         self.cursor.execute("SHOW TABLES")
         rows = self.cursor.fetchall()
         print(tabulate(rows, headers=self.cursor.column_names))
-        return rows
     def delete_table(self,tables):
         for table in tables:
             query = "DROP TABLE %s"
