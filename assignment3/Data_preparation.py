@@ -2,6 +2,7 @@ import os
 from Db_Interaction import Database
 from tabulate import tabulate
 from datetime import datetime
+import copy
 
 
 
@@ -64,8 +65,8 @@ def activity_collection():
                     activity_docs.append({
                     '_id':  count, 
                     'transportation_mode': array[2],
-                    'start_date_time': array[0],
-                    'end_date_time': array[1],
+                    'start_date_time': datetime.fromisoformat(array[0].replace("/","-").replace(" ","T")),
+                    'end_date_time': datetime.fromisoformat(array[1].replace("/","-").replace(" ","T")),
                     'user_id':  dir,
                      })
                     #print(count)
@@ -103,7 +104,7 @@ def trackpoint_collection():
         for root,dirs,files in os.walk(os.path.join(dataset_location,'Data',user)):
             for file in files:
                 if (file.endswith('.plt') and file != '.DS_Store'):
-                    if (sum(1 for _ in open(root+'/'+file))<=2500):
+                    if (sum(1 for _ in open(root+'/'+file))<=2506):
                         tj_data=open(root+'/'+file,'r')
                         tj_rows=tj_data.readlines()[6:]
                         for row in tj_rows:
@@ -113,9 +114,10 @@ def trackpoint_collection():
                                 'lon':array[1],
                                 'altitude': 0 if array[3]==-777 else array[3],
                                 'date_days':array[4],
-                                'date_time':array[-2]+" "+array[-1]
+                                'date_time': array[-2]+" "+array[-1]
                             })
         trackpoint_colls[user]=trackpoints
+        #print('Number of trackpoints for user : '+user+" ==== "+str(len(trackpoints)))
         # if count==4:
         #     break
         count+=1
@@ -126,17 +128,22 @@ def date_formation(date):
 
 def insert_trackpoint(db):
     trackpoints=trackpoint_collection()
+    total=0
     for user, trackpoint in trackpoints.items():
         activity=db.get_activity({'user_id': user})
+        trackpoint=trackpoints.get(user)
         trackpoint_with_activity=list()
         tp_tuple=tuple()
+        activity_backup=list(activity)
         count=0
+        #print(len(trackpoint), type(activity))
+        print("Intital trackpoints users "+str(user)+"  "+str(len(trackpoint)))
         for tp in trackpoint:
-            time= date_formation(tp['date_time'])
-            activity_id=[a['_id'] for a in activity if(date_formation(a['start_date_time'].replace("/","-")) <= time <= date_formation(a['end_date_time'].replace("/","-")))]
+            time= date_formation(tp.get('date_time'))
+            activity_id=[a['_id'] for a in activity_backup if(a['start_date_time'] <= time <= a['end_date_time'])]
             if activity_id:
-                #Make a insert dictionary
                 tp_tuple=(activity_id[0])
+                count+=1
             if tp_tuple:
                 trackpoint_with_activity.append({
                     "lat":tp['lat'],
@@ -146,20 +153,29 @@ def insert_trackpoint(db):
                     'date_time':tp['date_time'],
                     'activity_id': tp_tuple
                 })
-            count+=1
+        
         print(user+"   "+str(len(trackpoint_with_activity)))
+        total+=len(trackpoint_with_activity)
         if trackpoint_with_activity:
             db.insert_documents('trackpoint',trackpoint_with_activity)
-            print(user+" added trackpoints : "+str(count))
+            print(user+" added trackpoints : "+str(len(trackpoint_with_activity)))
         else:
             print(user+" added  0 trackpoints")
             
-        
-
-            
+    print("Number of trackpoints: ",str(total))
 
 
-        #Read user's activity by user_id '2008-09-27 23:47:31'
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -184,15 +200,10 @@ create_activity_coll(db) # step 2
 #print(db.items('activity'))
 insert_activity(db)
 
-
-
-#trackpoint_collection()
-
 create_trackpoint_coll(db)  #step 3
-
-
 insert_trackpoint(db)
-#db.fetch_documents('trackpoint')
+# db.fetch_documents('trackpoint')
+
 
 
 
